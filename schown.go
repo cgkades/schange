@@ -4,10 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strings"
-
 	"strconv"
-
+	"strings"
+	// Have to use the local user until go 1.7 comes out
+	// This was copied directly from os/user in the 1.7 branch
 	"./user"
 )
 
@@ -44,7 +44,22 @@ func uidFromUsername(username string) int {
 	return strconv.Atoi(user_obj.Uid)
 }
 
-//func getUsersDefaultGroup(username group)
+// Same as uidFromUsername, but for groups. Allowing us to ensure
+// the proper return for chownage
+func gidFromGroupname(groupname string) int {
+	group_struct, err := user.LookupGroup(groupname)
+	if err != nil {
+		fmt.Println("Error: group not found")
+		os.Exit(1)
+	}
+	return strconv.Atoi(group_struct.Gid)
+}
+
+// Takes a username and returns their default group
+func getUsersDefaultGroup(username string) int {
+	user_obj := loadUser(username)
+	return strconv.Atoi(user_obj.Gid)
+}
 
 func main() {
 	//Setup Flags
@@ -71,8 +86,7 @@ func main() {
 	if user_group[1] == "" {
 		fmt.Println("No group given.")
 	} else {
-		group, _ := user.LookupGroup(user_group[1])
-		fmt.Println("Group:", group.Gid)
+		fmt.Println("Group:", gidFromGroupname(user_group[1]))
 	}
 
 	user_obj := loadUser("byoakum")
