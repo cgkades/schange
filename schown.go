@@ -33,7 +33,13 @@ func userGroupParser(raw_string string) []string {
 	if colon_location == -1 {
 		return []string{raw_string, ""}
 	}
-	return strings.Split(raw_string, ":")
+	string_array := strings.Split(raw_string, ":")
+	if len(string_array[1]) == 0 {
+		return []string{string_array[0], "DEFAULTGROUP"}
+	} else {
+		return string_array
+	}
+
 }
 
 // This takes a username and returns an int for use
@@ -41,7 +47,8 @@ func userGroupParser(raw_string string) []string {
 // func Chown(name string, uid, gid int) error
 func uidFromUsername(username string) int {
 	user_obj := loadUser(username)
-	return strconv.Atoi(user_obj.Uid)
+	uid, _ := strconv.Atoi(user_obj.Uid)
+	return uid
 }
 
 // Same as uidFromUsername, but for groups. Allowing us to ensure
@@ -52,13 +59,15 @@ func gidFromGroupname(groupname string) int {
 		fmt.Println("Error: group not found")
 		os.Exit(1)
 	}
-	return strconv.Atoi(group_struct.Gid)
+	gid, _ := strconv.Atoi(group_struct.Gid)
+	return gid
 }
 
 // Takes a username and returns their default group
 func getUsersDefaultGroup(username string) int {
 	user_obj := loadUser(username)
-	return strconv.Atoi(user_obj.Gid)
+	default_gid, _ := strconv.Atoi(user_obj.Gid)
+	return default_gid
 }
 
 func main() {
@@ -81,12 +90,19 @@ func main() {
 		usage()
 		os.Exit(1)
 	}
-	fmt.Println("User/Group:", user_group)
 
-	if user_group[1] == "" {
-		fmt.Println("No group given.")
+	// Get the GID to use
+	var group_gid int
+
+	if user_group[1] == "DEFAULTGROUP" {
+		group_gid = getUsersDefaultGroup(user_group[0])
+		fmt.Println("Default GID:", group_gid)
+	} else if user_group[1] == "" {
+		group_gid = -1
+		fmt.Println("GID Set to -1")
 	} else {
-		fmt.Println("Group:", gidFromGroupname(user_group[1]))
+		group_gid = gidFromGroupname(user_group[1])
+		fmt.Println("Given GID:", group_gid)
 	}
 
 	user_obj := loadUser("byoakum")
