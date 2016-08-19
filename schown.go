@@ -91,21 +91,24 @@ func main() {
 		os.Exit(1)
 	}
 
+	user_name := user_group[0]
+	group_name := user_group[1]
+
 	// Get the GID to use
 	var group_gid int
 
-	if user_group[1] == "DEFAULTGROUP" {
-		group_gid = getUsersDefaultGroup(user_group[0])
+	if group_name == "DEFAULTGROUP" {
+		group_gid = getUsersDefaultGroup(user_name)
 		fmt.Println("Default GID:", group_gid)
 	} else if user_group[1] == "" {
 		group_gid = -1
 		fmt.Println("GID Set to -1")
 	} else {
-		group_gid = gidFromGroupname(user_group[1])
+		group_gid = gidFromGroupname(group_name)
 		fmt.Println("Given GID:", group_gid)
 	}
 
-	user_obj := loadUser("byoakum")
-	fmt.Println("UID:", user_obj.Uid)
-	fmt.Println("GID:", user_obj.Gid)
+	user_obj := loadUser(user_name)
+	fmt.Println("UID for", user_name, "=", user_obj.Uid)
+	fmt.Println("GID for", group_name, "=", group_gid)
 }
