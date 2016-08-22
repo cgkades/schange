@@ -70,6 +70,13 @@ func getUsersDefaultGroup(username string) int {
 	return default_gid
 }
 
+func chown(filename string, uid int, gid int) {
+	ret_val := os.Chown(filename, uid, gid)
+	if ret_val != nil {
+		fmt.Println(ret_val)
+	}
+}
+
 func main() {
 	//Setup Flags
 	flag.Usage = usage
@@ -82,7 +89,10 @@ func main() {
 		fmt.Println("Recursive was set")
 	}
 
-	fmt.Println("args:", allArgs)
+	if len(allArgs) < 2 {
+		usage()
+		os.Exit(1)
+	}
 	//Get user/group string slice
 	user_group := userGroupParser(allArgs[0])
 	if len(user_group) > 2 {
@@ -90,7 +100,7 @@ func main() {
 		usage()
 		os.Exit(1)
 	}
-
+	file_path := allArgs[1]
 	user_name := user_group[0]
 	group_name := user_group[1]
 
@@ -99,16 +109,19 @@ func main() {
 
 	if group_name == "DEFAULTGROUP" {
 		group_gid = getUsersDefaultGroup(user_name)
-		fmt.Println("Default GID:", group_gid)
+		//fmt.Println("Default GID:", group_gid)
 	} else if user_group[1] == "" {
 		group_gid = -1
-		fmt.Println("GID Set to -1")
+		//fmt.Println("GID Set to -1")
 	} else {
 		group_gid = gidFromGroupname(group_name)
-		fmt.Println("Given GID:", group_gid)
+		//fmt.Println("Given GID:", group_gid)
 	}
 
 	user_obj := loadUser(user_name)
-	fmt.Println("UID for", user_name, "=", user_obj.Uid)
-	fmt.Println("GID for", group_name, "=", group_gid)
+	//fmt.Println("UID for", user_name, "=", user_obj.Uid)
+	//fmt.Println("GID for", group_name, "=", group_gid)
+	user_uid, _ := strconv.Atoi(user_obj.Uid)
+
+	chown(file_path, user_uid, group_gid)
 }
