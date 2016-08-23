@@ -1,5 +1,14 @@
 package main
 
+/*
+TODO:
+* Add ability to have multiple paths at the end schown <user> <file1> <file2>
+* Add recursion
+* Add whitelist based on config file
+  * Read pathlist into an array
+* Add bad char identification
+*/
+
 import (
 	"flag"
 	"fmt"
