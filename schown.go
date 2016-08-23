@@ -70,11 +70,26 @@ func getUsersDefaultGroup(username string) int {
 	return default_gid
 }
 
-func chown(filename string, uid int, gid int) {
-	ret_val := os.Chown(filename, uid, gid)
-	if ret_val != nil {
-		fmt.Println(ret_val)
+func isSymlink(filename string) bool {
+	fileinfo, _ := os.Lstat(filename)
+	mode := fileinfo.Mode()
+
+	if os.FileMode.IsRegular(mode) {
+		return false
+	} else {
+		//fmt.Println("Symlink")
+		return true
 	}
+}
+
+func chown(filename string, uid int, gid int) {
+	if isSymlink(filename) != true {
+		ret_val := os.Chown(filename, uid, gid)
+		if ret_val != nil {
+			fmt.Println(ret_val)
+		}
+	}
+
 }
 
 func main() {
