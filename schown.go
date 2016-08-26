@@ -20,8 +20,8 @@ import (
 	"./user"
 )
 
-//GO has a good user struct that we can get from the os module
-//We'll use this to grab it and return the struct
+// GO has a good user struct that we can get from the os module
+// We'll use this to grab it and return the struct
 func loadUser(username string) *user.User {
 	user_obj, err := user.Lookup(username)
 	if err != nil {
@@ -31,12 +31,14 @@ func loadUser(username string) *user.User {
 	return user_obj
 }
 
-//Need to change the usage output so it looks right
+// Need to change the usage output so it looks right
 func usage() {
 	fmt.Fprintf(os.Stderr, "usage: schown <options> owner[:group] <path>\n")
 	flag.PrintDefaults()
 }
 
+// Chown can take in a string like user:group or user: or user, we figure
+// all of that out here and return a string array [0] is user [1] is group
 func userGroupParser(raw_string string) []string {
 	colon_location := strings.Index(raw_string, ":")
 	if colon_location == -1 {
@@ -101,6 +103,24 @@ func chown(filename string, uid int, gid int) {
 
 }
 
+// Returns UID, GID
+func getFinalUIDandGID(username, groupname string) (int, int) {
+	var gid int
+	if groupname == "DEFAULTGROUP" {
+		gid = getUsersDefaultGroup(user_name)
+	} else if user_group[1] == "" { // If no ':' was passed then we will assume no group change
+		// GID -1 (though not documented in the module) makes no change to group
+		gid = -1
+	} else {
+		gid = gidFromGroupname(group_name)
+	}
+	user_obj := loadUser(user_name)
+	uid, _ := strconv.Atoi(user_obj.Uid)
+
+	return uid, gid
+
+}
+
 func main() {
 	//Setup Flags
 	flag.Usage = usage
@@ -128,24 +148,7 @@ func main() {
 	user_name := user_group[0]
 	group_name := user_group[1]
 
-	// Get the GID to use
-	var group_gid int
+	uid, gid := getFinalUIDandGID(user_name, group_name)
 
-	if group_name == "DEFAULTGROUP" {
-		group_gid = getUsersDefaultGroup(user_name)
-		//fmt.Println("Default GID:", group_gid)
-	} else if user_group[1] == "" {
-		group_gid = -1
-		//fmt.Println("GID Set to -1")
-	} else {
-		group_gid = gidFromGroupname(group_name)
-		//fmt.Println("Given GID:", group_gid)
-	}
-
-	user_obj := loadUser(user_name)
-	//fmt.Println("UID for", user_name, "=", user_obj.Uid)
-	//fmt.Println("GID for", group_name, "=", group_gid)
-	user_uid, _ := strconv.Atoi(user_obj.Uid)
-
-	chown(file_path, user_uid, group_gid)
+	chown(file_path, uid, gid)
 }

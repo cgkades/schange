@@ -1,9 +1,9 @@
 package main
 
-import "./user"
+import "os"
 import "fmt"
 
 func main() {
-	group, _ := user.LookupGroupId("2133516900")
-	fmt.Println(group)
+	flag.Parse()
+	allArgs := flag.Args()
 }
